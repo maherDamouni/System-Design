@@ -1,3 +1,29 @@
-const pool = require('../postgresDB/index.js');
+// const pool = require('../postgresDB/index.js');
+const db = require('../mongoDB/index.js');
 
-module.exports = pool;
+// controller = {
+
+//   questions: {
+
+//     // GET
+//     // POST
+//     // PUT
+//   },
+
+//   answers: {
+
+//     // GET
+//     // POST
+//     // PUT
+//   },
+
+//   photos: {
+
+//     // GET
+//     // POST
+//   }
+// }
+
+// module.exports = controller;
+// module.exports = pool;
+module.exports = db;

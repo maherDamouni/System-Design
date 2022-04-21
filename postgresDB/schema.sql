@@ -7,7 +7,6 @@
 
 -- ---
 -- Table 'Answers'
---
 -- ---
 
 DROP TABLE IF EXISTS Answers;
@@ -28,7 +27,6 @@ CREATE TABLE Answers (
 
 -- ---
 -- Table 'Questions'
---
 -- ---
 
 CREATE TABLE Questions (
@@ -45,7 +43,6 @@ CREATE TABLE Questions (
 
 -- ---
 -- Table 'Photos'
---
 -- ---
 
 CREATE TABLE Photos (

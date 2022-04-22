@@ -11,9 +11,9 @@ const pool = new Pool({
 
  pool.connect((err) => {
    if (err) {
-     console.log('not connected to db')
+     console.error(err)
    } else {
-     console.log('connected to db')
+     console.log('connected to the elephant')
    }
  })
 

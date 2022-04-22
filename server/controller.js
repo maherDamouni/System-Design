@@ -1,5 +1,5 @@
-// const pool = require('../postgresDB/index.js');
-const db = require('../mongoDB/index.js');
+const pool = require('../postgresDB/index.js');
+// const db = require('../mongoDB/index.js');
 
 // controller = {
 
@@ -25,5 +25,5 @@ const db = require('../mongoDB/index.js');
 // }
 
 // module.exports = controller;
-// module.exports = pool;
-module.exports = db;
+module.exports = pool;
+// module.exports = db;

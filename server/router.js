@@ -2,21 +2,21 @@ const router = require('express').Router();
 const controller = require('./controller.js');
 
 // router
+// gets questions answers and photos based on product id
+//   .route('/getAll')
+//   .get(controller.getAll)
+
+// router
+// posts and updates questions
 //   .route('/questions')
-//   .get(controller.questions.GET)
 //   .post(controller.questions.POST)
 //   .put(controller.questions.PUT)
 
 // router
+// posts and updates answers. posts photos as well.
 //   .route('/answers')
-//   .get(controller.answers.GET)
 //   .post(controller.answers.POST)
 //   .put(controller.answers.PUT)
-
-// router
-//   .route('/photos')
-//   .get(controller.photos.GET)
-//   .post(controller.photos.POST)
 
 
 module.exports = router;

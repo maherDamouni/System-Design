@@ -1,22 +1,28 @@
 const router = require('express').Router();
 const controller = require('./controller.js');
 
-// router
-// gets questions answers and photos based on product id
-//   .route('/getAll')
-//   .get(controller.getAll)
+router
+  .route('/getAll')
+  .get(controller.getAll)
 
-// router
-// posts and updates questions
-//   .route('/questions')
-//   .post(controller.questions.POST)
-//   .put(controller.questions.PUT)
+router
+  .route('/questions')
+  .post(controller.questions.postQuestion)
+  .put(controller.questions.reportQuestion)
 
-// router
-// posts and updates answers. posts photos as well.
-//   .route('/answers')
-//   .post(controller.answers.POST)
-//   .put(controller.answers.PUT)
+router
+  .route('/helpfulQuestion')
+  .put(controller.questions.helpfulQuestion)
+
+router
+  .route('/answers')
+  // posts photos as well
+  .post(controller.answers.postAnswer)
+  .put(controller.answers.reportAnswer)
+
+router
+  .route('/helpfulAnswer')
+  .put(controller.answers.helpfulAnswer)
 
 
 module.exports = router;

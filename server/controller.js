@@ -1,9 +1,37 @@
 const pool = require('../postgresDB/index.js');
-// const db = require('../mongoDB/index.js');
+
+ // const queryString =
+
+    //   `SELECT json_agg(
+    //   json_build_object(
+    //     'question_id', questions.question_id,
+    //     'question_body', questions.question_body,
+    //     'date', questions.date,
+    //     'asker_name', questions.asker_name,
+    //     'reported', questions.reported,
+    //     'question_helpfulness', questions.question_helpfulness,
+    //     'answers', (SELECT json_object_agg(
+    //       answers.id, json_build_object(
+    //         'id', answers.id,
+    //         'question_id', answers.question_id,
+    //         'body', answers.body,
+    //         'date', answers.date,
+    //         'answerer_name', answers.answerer_name,
+    //         'reported', answers.reported,
+    //         'helpfulness', answers.helpfulness,
+    //         'photos', (SELECT json_agg(
+    //           photos.photo_url
+    //         ) FROM photos WHERE photos.answer_id = answers.id)
+    //       )
+    //     ) FROM answers WHERE answers.question_id = questions.question_id)
+    //   )
+    // ) AS results FROM questions WHERE questions.product_id = ${req.query.product_id}`
 
 controller = {
 
   getAll: (req, res) => {
+
+    // needs pagination
 
     const queryString =
 
@@ -11,7 +39,7 @@ controller = {
       json_build_object(
         'question_id', questions.question_id,
         'question_body', questions.question_body,
-
+        'date', questions.date,
         'asker_name', questions.asker_name,
         'reported', questions.reported,
         'question_helpfulness', questions.question_helpfulness,
@@ -20,7 +48,7 @@ controller = {
             'id', answers.id,
             'question_id', answers.question_id,
             'body', answers.body,
-            'question_date', to_timestamp(questions.question_date/ 1000),
+            'date', answers.date,
             'answerer_name', answers.answerer_name,
             'reported', answers.reported,
             'helpfulness', answers.helpfulness,
@@ -36,37 +64,26 @@ controller = {
       if (err) {
         res.status(400).send(err)
       } else {
-
         res.send(results.rows)
       }
     });
   },
 
-  // posting and updating will be handled by the main database. copy databases will be updated upon posting.
-
-  // 'question_date', to_timestamp(questions.question_date/ 1000)
-  // 'date', to_timestamp(answers.date/ 1000),
-
   questions: {
 
     postQuestion: (req, res) => {
 
-      //needs work
-
-      console.log('in question post', req.body)
       const queryString =
 
         `INSERT INTO questions
-      (question_body, asker_name, asker_email, product_id)
+      (product_id, question_body, date, asker_name, asker_email, reported, question_helpfulness)
       VALUES
-      (?, ?, ?, ?),
-      ['${req.body.body}', '${req.body.name}', '${req.body.email}', '${req.body.product_id}']`
+      ($1, $2, current_timestamp(0), $3, $4, false, 0) RETURNING question_id`
 
-      // ("${req.body.body}", "${req.body.name}", "${req.body.email}", "${req.body.product_id}")
+      const values = [req.body.product_id, req.body.body, req.body.name, req.body.email];
 
-      pool.query(queryString, (err, results) => {
+      pool.query(queryString, values, (err, results) => {
         if (err) {
-          console.log(results)
           res.status(401).send(err)
         } else {
           res.status(201).send('question posted')
@@ -86,7 +103,7 @@ controller = {
         if (err) {
           res.status(404).send(err)
         } else {
-          res.status(204).send('question reported')
+          res.status(201).send('question reported')
         }
       });
     },
@@ -103,34 +120,46 @@ controller = {
         if (err) {
           res.status(404).send(err)
         } else {
-          res.status(204).send('helpful question')
+          res.status(201).send('helpful question')
         }
       });
     }
-
   },
 
   answers: {
 
     postAnswer: (req, res) => {
 
-      //needs work
-
-      console.log('in answer post', req.body)
       const queryString =
 
         `INSERT INTO answers
-        (body, answerer_name, answerer_email, photos)
+        (question_id, body, date, answerer_name, answerer_email, reported, helpfulness)
         VALUES
-        (?, ?, ?, ?),
-        ['${req.body.body}', '${req.body.name}', '${req.body.email}', '${req.body.product_id}']`
+        ($1, $2, current_timestamp(0), $3, $4, false, 0)`
 
-      pool.query(queryString, (err, results) => {
+      const values = [req.query.question_id, req.body.body, req.body.name, req.body.email]
+
+      pool.query(queryString, values, (err, results) => {
         if (err) {
-          console.log(results)
           res.status(401).send(err)
         } else {
-          res.status(201).send('question posted')
+
+          const photoQuery =
+
+            `INSERT INTO photos
+          (answer_id, photo_url)
+          VALUES
+          ((SELECT MAX(id) FROM answers), $1)`
+
+          const photo_values = [req.body.photos]
+
+          pool.query(photoQuery, photo_values, (err, results) => {
+            if (err) {
+              res.status(401).send(err)
+            } else {
+              res.status(201).send('answer posted with photos')
+            }
+          });
         }
       });
     },
@@ -147,7 +176,7 @@ controller = {
         if (err) {
           res.status(404).send(err)
         } else {
-          res.status(204).send('answer reported')
+          res.status(201).send('answer reported')
         }
       });
     },
@@ -164,7 +193,7 @@ controller = {
         if (err) {
           res.status(404).send(err)
         } else {
-          res.status(204).send('helpful answer')
+          res.status(201).send('helpful answer')
         }
       });
     }
@@ -172,6 +201,4 @@ controller = {
   }
 }
 
-// module.exports = controller;
 module.exports = controller;
-// module.exports = db;

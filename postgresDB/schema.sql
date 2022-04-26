@@ -3,6 +3,32 @@ DROP TABLE IF EXISTS Questions;
 DROP TABLE IF EXISTS Photos;
 
 -- ---
+-- Table 'Questions'
+-- ---
+
+CREATE TABLE Questions (
+  question_id SERIAL NOT NULL,
+  product_id INTEGER NOT NULL,
+  question_body VARCHAR(1000) NOT NULL,
+  date BIGINT NOT NULL,
+  asker_name VARCHAR(50) NOT NULL,
+  asker_email VARCHAR(50) NOT NULL,
+  reported BOOLEAN NOT NULL  DEFAULT 'false',
+  question_helpfulness INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (question_id)
+);
+
+-- CREATE INDEX Questions_index ON Questions (question_id);
+-- CREATE SEQUENCE serial
+\COPY Public.Questions FROM 'postgresDB/csv/questions.csv' DELIMITER ',' CSV HEADER;
+CREATE INDEX Product_index ON Questions (product_id);
+SELECT setval('questions_question_id_seq', (SELECT MAX(question_id) FROM questions)+1);
+
+UPDATE questions SET date=date/1000;
+ALTER TABLE questions ALTER COLUMN date TYPE TIMESTAMP WITHOUT TIME ZONE USING to_timestamp(date) AT TIME ZONE 'UTC';
+ALTER TABLE questions ALTER COLUMN date SET DEFAULT CURRENT_TIMESTAMP;
+
+-- ---
 -- Table 'Answers'
 -- ---
 
@@ -13,36 +39,21 @@ CREATE TABLE Answers (
   date BIGINT NOT NULL,
   answerer_name VARCHAR(50) NOT NULL,
   answerer_email VARCHAR(50) NOT NULL,
-  reported BOOLEAN DEFAULT 'false',
+  reported BOOLEAN NOT NULL DEFAULT 'false',
   helpfulness INT NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
-CREATE INDEX Answers_index ON Answers (id);
-CREATE INDEX Answers_Questions_index ON Answers (question_id);
-
+-- CREATE INDEX Answers_index ON Answers (id);
+ALTER TABLE Answers ADD FOREIGN KEY (question_id) REFERENCES Questions (question_id);
 \COPY Public.Answers FROM 'postgresDB/csv/answers.csv' DELIMITER ',' CSV HEADER;
+CREATE INDEX Answers_Questions_index ON Answers (question_id);
+SELECT setval('answers_id_seq', (SELECT MAX(id) FROM answers)+1);
 
--- ---
--- Table 'Questions'
--- ---
+UPDATE answers SET date=date/1000;
+ALTER TABLE answers ALTER COLUMN date TYPE TIMESTAMP WITHOUT TIME ZONE USING to_timestamp(date) AT TIME ZONE 'UTC';
+ALTER TABLE answers ALTER COLUMN date SET DEFAULT CURRENT_TIMESTAMP;
 
-CREATE TABLE Questions (
-  question_id SERIAL NOT NULL,
-  product_id INTEGER NOT NULL,
-  question_body VARCHAR(1000) NOT NULL,
-  question_date BIGINT NOT NULL,
-  asker_name VARCHAR(50) NOT NULL,
-  asker_email VARCHAR(50) NOT NULL,
-  reported BOOLEAN DEFAULT 'false',
-  question_helpfulness INT NOT NULL DEFAULT 0,
-  PRIMARY KEY (question_id)
-);
-
-CREATE INDEX Questions_index ON Questions (question_id);
-CREATE INDEX Product_index ON Questions (product_id);
-
-\COPY Public.Questions FROM 'postgresDB/csv/questions.csv' DELIMITER ',' CSV HEADER;
 
 -- ---
 -- Table 'Photos'
@@ -55,10 +66,12 @@ CREATE TABLE Photos (
   PRIMARY KEY (photo_id)
 );
 
-CREATE INDEX Photo_index ON Photos (photo_id);
-CREATE INDEX Photo_Answers_index ON Photos (answer_id);
-
+-- CREATE INDEX Photo_index ON Photos (photo_id);
+ALTER TABLE PHOTOS ADD FOREIGN KEY (answer_id) REFERENCES Answers (id);
 \COPY Public.Photos FROM 'postgresDB/csv/answers_photos.csv' DELIMITER ',' CSV HEADER;
+CREATE INDEX Photo_Answers_index ON Photos (answer_id);
+SELECT setval('photos_photo_id_seq', (SELECT MAX(photo_id) FROM photos)+1);
+
 
 -- ---
 -- Foreign Keys

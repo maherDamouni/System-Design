@@ -1,17 +1,15 @@
 const express = require('express');
 const app = express();
 const router = require('./router.js');
+require('dotenv').config();
 
-const port = 3000;
+const port = process.env.PORT;
 
 app.use(express.json());
 app.use('/api', router);
 
 app.listen(port, (err) => {
 
-  if(err) {
-    console.log('not connected to server')
-  } else {
-    console.log(`connected on port ${port}`)
-  }
-})
+  err ? console.log('not connected to server') :
+   console.log(`connected on port ${port}`)
+});

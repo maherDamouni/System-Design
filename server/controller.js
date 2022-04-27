@@ -1,32 +1,5 @@
 const pool = require('../postgresDB/index.js');
 
- // const queryString =
-
-    //   `SELECT json_agg(
-    //   json_build_object(
-    //     'question_id', questions.question_id,
-    //     'question_body', questions.question_body,
-    //     'date', questions.date,
-    //     'asker_name', questions.asker_name,
-    //     'reported', questions.reported,
-    //     'question_helpfulness', questions.question_helpfulness,
-    //     'answers', (SELECT json_object_agg(
-    //       answers.id, json_build_object(
-    //         'id', answers.id,
-    //         'question_id', answers.question_id,
-    //         'body', answers.body,
-    //         'date', answers.date,
-    //         'answerer_name', answers.answerer_name,
-    //         'reported', answers.reported,
-    //         'helpfulness', answers.helpfulness,
-    //         'photos', (SELECT json_agg(
-    //           photos.photo_url
-    //         ) FROM photos WHERE photos.answer_id = answers.id)
-    //       )
-    //     ) FROM answers WHERE answers.question_id = questions.question_id)
-    //   )
-    // ) AS results FROM questions WHERE questions.product_id = ${req.query.product_id}`
-
 controller = {
 
   getAll: (req, res) => {
@@ -43,7 +16,7 @@ controller = {
         'asker_name', questions.asker_name,
         'reported', questions.reported,
         'question_helpfulness', questions.question_helpfulness,
-        'answers', (SELECT json_object_agg(
+        'answers', (SELECT COALESCE(json_object_agg(
           answers.id, json_build_object(
             'id', answers.id,
             'question_id', answers.question_id,
@@ -52,21 +25,18 @@ controller = {
             'answerer_name', answers.answerer_name,
             'reported', answers.reported,
             'helpfulness', answers.helpfulness,
-            'photos', (SELECT json_agg(
+            'photos', (SELECT COALESCE(json_agg(
               photos.photo_url
-            ) FROM photos WHERE photos.answer_id = answers.id)
+            ), '[]'::json) FROM photos WHERE photos.answer_id = answers.id)
           )
-        ) FROM answers WHERE answers.question_id = questions.question_id)
+        ), '{}'::json) FROM answers WHERE answers.question_id = questions.question_id)
       )
     ) AS results FROM questions WHERE questions.product_id = ${req.query.product_id}`
 
     pool.query(queryString, (err, results) => {
-      if (err) {
-        res.status(400).send(err)
-      } else {
-        res.send(results.rows)
-      }
-    });
+
+      err ? res.status(400).send(err) : res.send(results.rows)
+    })
   },
 
   questions: {
@@ -76,18 +46,15 @@ controller = {
       const queryString =
 
         `INSERT INTO questions
-      (product_id, question_body, date, asker_name, asker_email, reported, question_helpfulness)
-      VALUES
-      ($1, $2, current_timestamp(0), $3, $4, false, 0) RETURNING question_id`
+        (product_id, question_body, date, asker_name, asker_email, reported, question_helpfulness)
+        VALUES
+        ($1, $2, current_timestamp(0), $3, $4, false, 0) RETURNING question_id`
 
       const values = [req.body.product_id, req.body.body, req.body.name, req.body.email];
 
       pool.query(queryString, values, (err, results) => {
-        if (err) {
-          res.status(401).send(err)
-        } else {
-          res.status(201).send('question posted')
-        }
+
+        err ? res.status(401).send(err) : res.status(201).send('question posted')
       });
     },
 
@@ -96,15 +63,12 @@ controller = {
       const queryString =
 
         `UPDATE questions
-      SET reported = true
-      WHERE question_id = ${req.query.question_id}`
+        SET reported = true
+        WHERE question_id = ${req.params.question_id}`
 
       pool.query(queryString, (err, results) => {
-        if (err) {
-          res.status(404).send(err)
-        } else {
-          res.status(201).send('question reported')
-        }
+
+        err ? res.status(404).send(err) : res.status(201).send('question reported')
       });
     },
 
@@ -113,15 +77,12 @@ controller = {
       const queryString =
 
         `UPDATE questions
-      SET question_helpfulness = question_helpfulness + 1
-      WHERE question_id = ${req.query.question_id}`
+        SET question_helpfulness = question_helpfulness + 1
+        WHERE question_id = ${req.params.question_id}`
 
       pool.query(queryString, (err, results) => {
-        if (err) {
-          res.status(404).send(err)
-        } else {
-          res.status(201).send('helpful question')
-        }
+
+        err ? res.status(404).send(err) : res.status(201).send('helpful question')
       });
     }
   },
@@ -130,37 +91,31 @@ controller = {
 
     postAnswer: (req, res) => {
 
-      const queryString =
+      const postAnswerQuery =
 
         `INSERT INTO answers
         (question_id, body, date, answerer_name, answerer_email, reported, helpfulness)
         VALUES
         ($1, $2, current_timestamp(0), $3, $4, false, 0)`
 
-      const values = [req.query.question_id, req.body.body, req.body.name, req.body.email]
+      const photoQuery =
 
-      pool.query(queryString, values, (err, results) => {
-        if (err) {
-          res.status(401).send(err)
-        } else {
+        `INSERT INTO photos
+        (answer_id, photo_url)
+        VALUES
+        ((SELECT MAX(id) FROM answers), $1)`
 
-          const photoQuery =
+      const answerValues = [req.params.question_id, req.body.body, req.body.name, req.body.email]
 
-            `INSERT INTO photos
-          (answer_id, photo_url)
-          VALUES
-          ((SELECT MAX(id) FROM answers), $1)`
+      const photoValues = [req.body.photos]
 
-          const photo_values = [req.body.photos]
+      pool.query(postAnswerQuery, answerValues, (err, results) => {
 
-          pool.query(photoQuery, photo_values, (err, results) => {
-            if (err) {
-              res.status(401).send(err)
-            } else {
-              res.status(201).send('answer posted with photos')
-            }
+          err ? res.status(401).send(err) :
+          pool.query(photoQuery, photoValues, (err, results) => {
+
+            err ? res.status(401).send(err) : res.status(201).send('answer posted with photos')
           });
-        }
       });
     },
 
@@ -169,15 +124,12 @@ controller = {
       const queryString =
 
         `UPDATE answers
-      SET reported = true
-      WHERE id = ${req.query.answer_id}`
+        SET reported = true
+        WHERE id = ${req.params.answer_id}`
 
       pool.query(queryString, (err, results) => {
-        if (err) {
-          res.status(404).send(err)
-        } else {
-          res.status(201).send('answer reported')
-        }
+
+        err ? res.status(404).send(err) : res.status(201).send('answer reported')
       });
     },
 
@@ -186,19 +138,15 @@ controller = {
       const queryString =
 
         `UPDATE answers
-      SET helpfulness = helpfulness + 1
-      WHERE id = ${req.query.answer_id}`
+        SET helpfulness = helpfulness + 1
+        WHERE id = ${req.params.answer_id}`
 
       pool.query(queryString, (err, results) => {
-        if (err) {
-          res.status(404).send(err)
-        } else {
-          res.status(201).send('helpful answer')
-        }
+
+        err ? res.status(404).send(err) :  res.status(201).send('helpful answer')
       });
     }
-
   }
-}
+};
 
 module.exports = controller;

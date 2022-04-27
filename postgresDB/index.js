@@ -1,20 +1,18 @@
 const { Pool } = require('pg');
+require('dotenv').config();
 
 const pool = new Pool({
 
-  user: 'maherdamouni',
-  host: 'localhost',
-  database: 'sdc',
-  password: '',
-  port: 5432
+  user: process.env.PGUSER,
+  host: process.env.HOST,
+  database: process.env.DB,
+  password: process.env.PW,
+  port: process.env.DBPORT
  })
 
  pool.connect((err) => {
-   if (err) {
-     console.error(err)
-   } else {
-     console.log('connected to the elephant')
-   }
+
+   err ? console.error(err) : console.log('conencted to the elephant')
  })
 
  module.exports = pool;

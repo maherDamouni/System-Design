@@ -2,27 +2,28 @@ const router = require('express').Router();
 const controller = require('./controller.js');
 
 router
-  .route('/getAll')
+  .route('/qa/questions')
   .get(controller.getAll)
-
-router
-  .route('/questions')
   .post(controller.questions.postQuestion)
-  .put(controller.questions.reportQuestion)
 
 router
-  .route('/helpfulQuestion')
+  .route('/qa/questions/:question_id/answers')
+  .post(controller.answers.postAnswer)
+
+router
+  .route('/qa/question/:question_id/helpful')
   .put(controller.questions.helpfulQuestion)
 
 router
-  .route('/answers')
-  // posts photos as well
-  .post(controller.answers.postAnswer)
-  .put(controller.answers.reportAnswer)
+  .route('/qa/question/:question_id/report')
+  .put(controller.questions.reportQuestion)
 
 router
-  .route('/helpfulAnswer')
+  .route('/qa/answers/:answer_id/helpful')
   .put(controller.answers.helpfulAnswer)
 
+router
+  .route('/qa/answers/:answer_id/report')
+  .put(controller.answers.reportAnswer)
 
 module.exports = router;

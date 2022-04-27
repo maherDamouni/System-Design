@@ -1,3 +1,4 @@
+
 DROP TABLE IF EXISTS Answers;
 DROP TABLE IF EXISTS Questions;
 DROP TABLE IF EXISTS Photos;
@@ -20,7 +21,7 @@ CREATE TABLE Questions (
 
 -- CREATE INDEX Questions_index ON Questions (question_id);
 -- CREATE SEQUENCE serial
-\COPY Public.Questions FROM 'postgresDB/csv/questions.csv' DELIMITER ',' CSV HEADER;
+\COPY Public.Questions FROM '/home/ubuntu/API-QA/data/questions.csv' DELIMITER ',' CSV HEADER;
 CREATE INDEX Product_index ON Questions (product_id);
 SELECT setval('questions_question_id_seq', (SELECT MAX(question_id) FROM questions)+1);
 
@@ -46,7 +47,7 @@ CREATE TABLE Answers (
 
 -- CREATE INDEX Answers_index ON Answers (id);
 ALTER TABLE Answers ADD FOREIGN KEY (question_id) REFERENCES Questions (question_id);
-\COPY Public.Answers FROM 'postgresDB/csv/answers.csv' DELIMITER ',' CSV HEADER;
+\COPY Public.Answers FROM '/home/ubuntu/API-QA/data/answers.csv' DELIMITER ',' CSV HEADER;
 CREATE INDEX Answers_Questions_index ON Answers (question_id);
 SELECT setval('answers_id_seq', (SELECT MAX(id) FROM answers)+1);
 
@@ -68,7 +69,7 @@ CREATE TABLE Photos (
 
 -- CREATE INDEX Photo_index ON Photos (photo_id);
 ALTER TABLE PHOTOS ADD FOREIGN KEY (answer_id) REFERENCES Answers (id);
-\COPY Public.Photos FROM 'postgresDB/csv/answers_photos.csv' DELIMITER ',' CSV HEADER;
+\COPY Public.Photos FROM 'home/ubuntu/API-QA/data/answers_photos.csv' DELIMITER ',' CSV HEADER;
 CREATE INDEX Photo_Answers_index ON Photos (answer_id);
 SELECT setval('photos_photo_id_seq', (SELECT MAX(photo_id) FROM photos)+1);
 

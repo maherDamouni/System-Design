@@ -1,6 +1,8 @@
 # Logs
 logs
 *.log
+*.pem
+**/.DS_Store
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -102,3 +104,8 @@ dist
 
 # TernJS port file
 .tern-port
+
+
+scp -i thePem.pem postgresDB/csv/answers.csv ubuntu@ec2-13-56-227-2.us-west-1.compute.amazonaws.com:~data
+
+

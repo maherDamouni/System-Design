@@ -30,6 +30,77 @@ change example.env to .env and configure variables.
 npm start
 ```
 
+## Example Queries
+
+```javascript
+  getAll: (req, res) => {
+
+    const queryString =
+
+      `SELECT json_agg(
+      json_build_object(
+        'question_id', questions.question_id,
+        'question_body', questions.question_body,
+        'date', questions.date,
+        'asker_name', questions.asker_name,
+        'reported', questions.reported,
+        'question_helpfulness', questions.question_helpfulness,
+        'answers', (SELECT COALESCE(json_object_agg(
+          answers.id, json_build_object(
+            'id', answers.id,
+            'question_id', answers.question_id,
+            'body', answers.body,
+            'date', answers.date,
+            'answerer_name', answers.answerer_name,
+            'reported', answers.reported,
+            'helpfulness', answers.helpfulness,
+            'photos', (SELECT COALESCE(json_agg(
+              photos.photo_url
+            ), '[]'::json) FROM photos WHERE photos.answer_id = answers.id)
+          )
+        ), '{}'::json) FROM answers WHERE answers.question_id = questions.question_id)
+      )
+    ) AS results FROM questions WHERE questions.product_id = ${req.query.product_id}`
+
+    pool.query(queryString, (err, results) => {
+
+      err ? res.status(400).send(err) : res.send(results.rows)
+    })
+  },
+
+    postQuestion: (req, res) => {
+
+      const queryString =
+
+        `INSERT INTO questions
+        (product_id, question_body, date, asker_name, asker_email, reported, question_helpfulness)
+        VALUES
+        ($1, $2, current_timestamp(0), $3, $4, false, 0) RETURNING question_id`
+
+      const values = [req.body.product_id, req.body.body, req.body.name, req.body.email];
+
+      pool.query(queryString, values, (err, results) => {
+
+        err ? res.status(401).send(err) : res.status(201).send('question posted')
+      });
+    },
+
+    reportQuestion: (req, res) => {
+
+      const queryString =
+
+        `UPDATE questions
+        SET reported = true
+        WHERE question_id = ${req.params.question_id}`
+
+      pool.query(queryString, (err, results) => {
+
+        err ? res.status(404).send(err) : res.status(201).send('question reported')
+      });
+    }
+
+```
+
 ## Description/API EndPoint
 
 The API endpoints for this service are as follows:
